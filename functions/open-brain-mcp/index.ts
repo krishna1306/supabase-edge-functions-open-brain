@@ -22,7 +22,7 @@ async function getEmbedding(text: string): Promise<number[]> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "openai/text-embedding-3-small",
+      model: "openai/text-embedding-3-large",
       input: text,
     }),
   });
