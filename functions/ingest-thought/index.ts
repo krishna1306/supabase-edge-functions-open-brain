@@ -13,7 +13,7 @@ async function getEmbedding(text: string): Promise<number[]> {
   const r = await fetch(`${OPENROUTER_BASE}/embeddings`, {
     method: "POST",
     headers: { "Authorization": `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "openai/text-embedding-3-large", input: text }),
+    body: JSON.stringify({ model: "openai/text-embedding-3-large", input: text, dimensions: 3072 }),
   });
   const d = await r.json();
   return d.data[0].embedding;

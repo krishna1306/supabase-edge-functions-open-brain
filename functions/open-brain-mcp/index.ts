@@ -24,6 +24,7 @@ async function getEmbedding(text: string): Promise<number[]> {
     body: JSON.stringify({
       model: "openai/text-embedding-3-large",
       input: text,
+      dimensions: 3072,
     }),
   });
   if (!r.ok) {
