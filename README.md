@@ -60,7 +60,7 @@ flowchart TD
 Two AI operations happen simultaneously:
 
 a) **Generate Embedding** (via OpenRouter)
-- Sends message text to `text-embedding-3-small` model
+- Sends message text to `text-embedding-3-large` model with 3072 dimensions
 - Receives back a vector representation (array of numbers)
 - This enables semantic search later
 
@@ -222,9 +222,10 @@ flowchart TD
 Both functions share the same AI processing logic:
 
 ### Embedding Generation
-- Uses OpenAI's `text-embedding-3-small` model via OpenRouter
-- Converts text into 1536-dimensional vector
-- Enables semantic similarity search
+- Uses OpenAI's `text-embedding-3-large` model via OpenRouter
+- Converts text into 3072-dimensional vector
+- **Important**: The `dimensions: 3072` parameter must be explicitly specified in the API request
+- Enables semantic similarity search with higher quality embeddings
 
 ### Metadata Extraction
 - Uses OpenAI's `gpt-4o-mini` model via OpenRouter
@@ -235,9 +236,11 @@ Both functions share the same AI processing logic:
 Both functions interact with the `thoughts` table which contains:
 - `id` - Unique identifier (UUID)
 - `content` - Original text
-- `embedding` - Vector representation
+- `embedding` - Vector representation (`vector(3072)` type)
 - `metadata` - JSON object with extracted information
 - `created_at` - Timestamp
+
+**Note**: The embedding column must be defined as `vector(3072)` to match the dimension output from `text-embedding-3-large`.
 
 ---
 
@@ -262,3 +265,28 @@ Both functions interact with the `thoughts` table which contains:
 - Lower the similarity threshold (default is 0.5)
 - Try different search terms
 - Verify thoughts were captured with embeddings
+
+### Embedding dimension mismatch error
+**Error**: `expected 3072 dimensions, not 1536`
+
+**Cause**: OpenRouter returns 1536-dimensional embeddings by default for `text-embedding-3-large` unless explicitly told otherwise.
+
+**Solution**: Ensure both edge functions include `dimensions: 3072` in the embeddings API request:
+```typescript
+body: JSON.stringify({ 
+  model: "openai/text-embedding-3-large", 
+  input: text, 
+  dimensions: 3072 
+})
+```
+
+**Verification**: Check your database schema matches:
+```sql
+SELECT 
+    a.attname AS column_name,
+    pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
+FROM pg_catalog.pg_attribute a
+WHERE a.attrelid = 'thoughts'::regclass
+AND a.attname = 'embedding';
+```
+Should return `vector(3072)`.
